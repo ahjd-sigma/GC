@@ -1,0 +1,42 @@
+name: GeekedCraft
+version: '1'
+main: ahjd.geekedCraft.main.GeekedCraft
+api-version: '1.21'
+authors: [ ahjd ]
+
+commands:
+  it:
+    description: Item Management
+    usage: /it <subcommand> <args>
+  mob:
+    description: Mob Management
+    usage: /hm <subcommand> <args>
+  hm:
+    description: Human stat management
+    usage: /hm <subcommand> <args>
+
+  db:
+    description: Database handling command
+    usage: /db <subcommand> <args>
+
+permissions:
+  geekedcraft.mob.stats:
+    description: Allows handling mob stats
+    default: op
+  geekedcraft.mob.dummy:
+    description: Allows spawning dummy mobs
+    default: op
+  geekedcraft.mob.spawn:
+    description: Allows spawning mobs
+    default: op
+
+  geekedcraft.hm.stats:
+    description: Allows managing human stats
+    default: op
+
+  geekedcraft.db.modify:
+    description: Allows modifying player stats
+    default: op
+  geekedcraft.db.stats:
+    description: Allows viewing player stats
+    default: op
