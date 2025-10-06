@@ -8,8 +8,8 @@ import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 
 object HumanHealthDisplay {
-
-    private const val HEART = "\u2764" // Unicode heart ❤️
+    private const val HEART = "\u2764"
+    private var taskId: Int? = null
 
     private fun updateActionBar(player: Player) {
         val stats = HumanStatManager.get(player.uniqueId.toString())
@@ -22,13 +22,21 @@ object HumanHealthDisplay {
         player.sendActionBar(healthText)
     }
 
-    fun startTicker() {
+    fun startTicker(): Int {
+        stop()
         val plugin = GeekedCraft.getInstance()
 
-        plugin.scheduleRepeatingTask({
+        taskId = plugin.scheduleRepeatingTask({
             Bukkit.getOnlinePlayers().forEach { player ->
                 updateActionBar(player)
             }
-        }, 0L, 5L) // frequent updating
+        }, 0L, 5L)
+
+        return taskId!!
+    }
+
+    fun stop() {
+        taskId?.let { Bukkit.getScheduler().cancelTask(it) }
+        taskId = null
     }
 }

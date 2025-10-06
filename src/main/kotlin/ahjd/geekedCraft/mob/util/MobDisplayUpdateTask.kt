@@ -1,4 +1,4 @@
-package ahjd.geekedCraft.mob.misc
+package ahjd.geekedCraft.mob.util
 
 import ahjd.geekedCraft.main.GeekedCraft
 import ahjd.geekedCraft.mob.MobManager
@@ -9,7 +9,7 @@ import java.util.*
 object MobDisplayUpdateTask {
     private var taskId: Int? = null
 
-    fun start(plugin: GeekedCraft) {
+    fun start(plugin: GeekedCraft): Int {
         stop()
         taskId = plugin.scheduleRepeatingTask({
             MobManager.getAllMobs().forEach { stats ->
@@ -21,6 +21,7 @@ object MobDisplayUpdateTask {
                 }
             }
         }, 3L, 3L)
+        return taskId!!
     }
 
     fun stop() {

@@ -2,13 +2,9 @@ package ahjd.geekedCraft.mob
 
 import ahjd.geekedCraft.events.mob.MobSpeedChangeEvent
 import ahjd.geekedCraft.mob.ai.MobAI
-import ahjd.geekedCraft.mob.misc.MobDisplayUpdateTask
-import ahjd.geekedCraft.mob.misc.MobHealthDisplay
-import ahjd.geekedCraft.mob.misc.MobHealthRegenTask
-import ahjd.geekedCraft.mob.misc.dummy.DummyCombatTracker
-import ahjd.geekedCraft.mob.misc.dummy.DummyDPSTest
 import ahjd.geekedCraft.mob.stats.MobEnums
 import ahjd.geekedCraft.mob.stats.MobStats
+import ahjd.geekedCraft.mob.util.MobHealthDisplay
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.entity.EntityType
@@ -27,10 +23,6 @@ object MobManager {
     fun clear() {
         stats.values.forEach { (Bukkit.getEntity(UUID.fromString(it.uuid)) as? LivingEntity)?.remove() }
         stats.clear()
-        MobHealthRegenTask.stop()
-        MobDisplayUpdateTask.stop()
-        DummyCombatTracker.stop()
-        DummyDPSTest.stop()
     }
 
     private fun spawn(m: MobStats, loc: Location, setup: MobStats.() -> Unit = {}): LivingEntity {

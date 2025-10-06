@@ -1,4 +1,4 @@
-package ahjd.geekedCraft.mob.misc.dummy
+package ahjd.geekedCraft.mob.util.dummy
 
 data class CombatSession(
     val damageEntries: MutableList<DamageEntry> = mutableListOf(),

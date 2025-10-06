@@ -9,10 +9,6 @@ import java.util.*
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.full.memberProperties
 
-/**
- * Clean, stable HumanStats implementation
- * Thread-safe stat management with atomic equipment updates
- */
 data class HumanStats(
     val uuid: String,
 

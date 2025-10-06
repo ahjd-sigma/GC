@@ -110,6 +110,7 @@ class DamageCatcherLSN : Listener {
     private fun mapEventCauseToEnvCause(cause: EntityDamageEvent.DamageCause): EnvCause? {
         return when (cause) {
             EntityDamageEvent.DamageCause.FIRE -> EnvCause.FIRE
+            EntityDamageEvent.DamageCause.CAMPFIRE -> EnvCause.CAMPFIRE
             EntityDamageEvent.DamageCause.LAVA -> EnvCause.LAVA
             EntityDamageEvent.DamageCause.FALL -> EnvCause.FALL
             EntityDamageEvent.DamageCause.DROWNING -> EnvCause.DROWNING

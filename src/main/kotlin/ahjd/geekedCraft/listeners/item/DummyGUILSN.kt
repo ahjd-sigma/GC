@@ -3,8 +3,8 @@ package ahjd.geekedCraft.listeners.item
 import ahjd.geekedCraft.damage.util.DamageType
 import ahjd.geekedCraft.guis.mob.DummyGUI
 import ahjd.geekedCraft.mob.MobManager
-import ahjd.geekedCraft.mob.misc.dummy.DummyCombatTracker
-import ahjd.geekedCraft.mob.misc.dummy.DummyDPSTest
+import ahjd.geekedCraft.mob.util.dummy.DummyCombatTracker
+import ahjd.geekedCraft.mob.util.dummy.DummyDPSTest
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler

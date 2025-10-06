@@ -33,6 +33,9 @@ permissions:
   geekedcraft.hm.stats:
     description: Allows managing human stats
     default: op
+  geekedcraft.hm.effects:
+    description: Allows checking human effects
+    default: op
 
   geekedcraft.db.modify:
     description: Allows modifying player stats

@@ -17,6 +17,17 @@ import kotlin.math.sin
 class DamageIndicatorHolo {
     private val plugin: GeekedCraft = GeekedCraft.getInstance()
 
+    companion object {
+        private const val SHOULDER_HEIGHT = 2.2
+        private const val SHOULDER_RADIUS = 1.3
+        private const val ANIMATION_DURATION = 25L
+        private const val MAX_RISE_HEIGHT = 0.07
+        private const val FALL_DISTANCE = 0.6
+        private const val RISE_PERCENT = 0.1 // 10% rising, 90% falling
+        private const val BASE_SCALE = 0.07
+        private const val CRIT_SCALE = 0.1
+    }
+
     private fun ElementType.toSymbol(): ElementalSymbols {
         return when (this) {
             ElementType.THUNDER -> ElementalSymbols.THUNDER
@@ -56,50 +67,11 @@ class DamageIndicatorHolo {
             Component.text("${symbol.symbol} -$damage", TextColor.color(symbol.colorHex))
         }
     }
-
-    /** Standard vertical damage indicators */
-    fun showDamageIndicators(location: Location, breakdown: DamageBreakdown) {
-        val baseLoc = location.clone()
-        var verticalOffset = 0.0
-
-        breakdown.elementalDamages.forEach { (element, damage) ->
-            if (damage <= 0) return@forEach
-
-            val symbol = element.toSymbol()
-            val text = formatDamageText(symbol, element, damage, breakdown.wasCrit)
-
-            val spawnLoc = baseLoc.clone().add(
-                (Math.random() - 0.5) * 0.3,
-                verticalOffset,
-                (Math.random() - 0.5) * 0.3
-            )
-
-            val display = TempHologramController.spawnTemp(spawnLoc, text, 40L, plugin) {
-                this.billboard = Display.Billboard.CENTER
-                this.isShadowed = true
-                this.alignment = TextDisplay.TextAlignment.CENTER
-            }
-
-            display?.let {
-                HologramAnimation.animate(it, plugin, 40) {
-                    movement = Vector(0.0, 1.0, 0.0)
-                    easing = HologramAnimation.Easing::easeOutQuad
-                    fadeOut = true
-                    fadeStartPercent = 0.5
-                    scaleChange = if (breakdown.wasCrit) Vector(0.3, 0.3, 0.3) else Vector(0.2, 0.2, 0.2)
-                }
-            }
-
-            verticalOffset += 0.3
-        }
-    }
-
     fun showEnvironmentalIndicator(location: Location, healthLoss: Int, envCause: EnvCause) {
         if (healthLoss <= 0) return
 
-        val baseLoc = location.clone()
+        val baseLoc = location.clone().add(0.0, SHOULDER_HEIGHT, 0.0)
 
-        // Map environmental causes to ElementType
         val element = when (envCause) {
             EnvCause.LAVA, EnvCause.FIRE, EnvCause.FIRE_TICK, EnvCause.HOT_FLOOR, EnvCause.CAMPFIRE, EnvCause.BLOCK_EXPLOSION -> ElementType.FIRE
             EnvCause.DROWNING -> ElementType.WATER
@@ -113,71 +85,39 @@ class DamageIndicatorHolo {
         val symbol = element.toSymbol()
         val text = formatDamageText(symbol, element, healthLoss, isCrit = false)
 
-        val radius = 0.5
-        val angleOffset = 0.0
-        val spawnLoc = baseLoc.clone().add(cos(angleOffset) * radius, 0.5, sin(angleOffset) * radius)
+        val angleOffset = if (Math.random() < 0.5) Math.PI / 4 else -Math.PI / 4
+        val spawnLoc = baseLoc.clone().add(cos(angleOffset) * SHOULDER_RADIUS, 0.0, sin(angleOffset) * SHOULDER_RADIUS)
 
-        val display = TempHologramController.spawnTemp(spawnLoc, text, 30L, plugin) {
+        val display = TempHologramController.spawnTemp(spawnLoc, text, ANIMATION_DURATION, plugin) {
             this.billboard = Display.Billboard.CENTER
             this.isShadowed = true
             this.alignment = TextDisplay.TextAlignment.CENTER
         }
 
         display?.let {
-            HologramAnimation.animate(it, plugin, 30) {
-                scaleChange = Vector(0.7, 0.7, 0.7)
-                easing = HologramAnimation.Easing::easeOutBack
+            val startLoc = spawnLoc.clone()
+            HologramAnimation.animate(it, plugin, ANIMATION_DURATION.toInt()) {
+                onTick = { progress, _ ->
+                    val yOffset = if (progress < RISE_PERCENT) {
+                        // Rise phase
+                        (progress / RISE_PERCENT) * MAX_RISE_HEIGHT
+                    } else {
+                        // Fall phase
+                        MAX_RISE_HEIGHT - ((progress - RISE_PERCENT) / (1.0 - RISE_PERCENT)) * (MAX_RISE_HEIGHT + FALL_DISTANCE)
+                    }
+                    it.teleport(startLoc.clone().add(0.0, yOffset, 0.0))
+                }
                 fadeIn = true
                 fadeEndPercent = 0.2
                 fadeOut = true
                 fadeStartPercent = 0.7
-                movement = Vector(0.0, 0.8, 0.0)
+                scaleChange = Vector(BASE_SCALE, BASE_SCALE, BASE_SCALE)
             }
         }
     }
 
-
-    /** Circular pop-out damage indicators */
-    fun showDamageIndicatorsPopup(location: Location, breakdown: DamageBreakdown) {
-        val baseLoc = location.clone()
-        var angleOffset = 0.0
-
-        breakdown.elementalDamages.forEach { (element, damage) ->
-            if (damage <= 0) return@forEach
-
-            val symbol = element.toSymbol()
-            val text = formatDamageText(symbol, element, damage, breakdown.wasCrit)
-
-            val radius = 0.5
-            val x = cos(angleOffset) * radius
-            val z = sin(angleOffset) * radius
-            val spawnLoc = baseLoc.clone().add(x, 0.5, z)
-
-            val display = TempHologramController.spawnTemp(spawnLoc, text, 30L, plugin) {
-                this.billboard = Display.Billboard.CENTER
-                this.isShadowed = true
-                this.alignment = TextDisplay.TextAlignment.CENTER
-            }
-
-            display?.let {
-                HologramAnimation.animate(it, plugin, 30) {
-                    scaleChange = if (breakdown.wasCrit) Vector(0.7, 0.7, 0.7) else Vector(0.5, 0.5, 0.5)
-                    easing = HologramAnimation.Easing::easeOutBack
-                    fadeIn = true
-                    fadeEndPercent = 0.2
-                    fadeOut = true
-                    fadeStartPercent = 0.7
-                    movement = Vector(x * 0.5, 0.8, z * 0.5)
-                }
-            }
-
-            angleOffset += Math.PI * 2 / breakdown.elementalDamages.size
-        }
-    }
-
-    /** Bouncing damage indicators */
     fun showDamageIndicatorsBounce(location: Location, breakdown: DamageBreakdown) {
-        val baseLoc = location.clone()
+        val baseLoc = location.clone().add(0.0, SHOULDER_HEIGHT, 0.0)
 
         breakdown.elementalDamages.forEach { (element, damage) ->
             if (damage <= 0) return@forEach
@@ -185,13 +125,15 @@ class DamageIndicatorHolo {
             val symbol = element.toSymbol()
             val text = formatDamageText(symbol, element, damage, breakdown.wasCrit)
 
+            val angle = Math.random() * 2 * Math.PI
+            val radius = 0.5 + Math.random() * 0.3
             val spawnLoc = baseLoc.clone().add(
-                (Math.random() - 0.5) * 0.4,
-                1.0,
-                (Math.random() - 0.5) * 0.4
+                cos(angle) * radius,
+                Math.random() * 0.15,
+                sin(angle) * radius
             )
 
-            val display = TempHologramController.spawnTemp(spawnLoc, text, 40L, plugin) {
+            val display = TempHologramController.spawnTemp(spawnLoc, text, ANIMATION_DURATION, plugin) {
                 this.billboard = Display.Billboard.CENTER
                 this.isShadowed = true
                 this.alignment = TextDisplay.TextAlignment.CENTER
@@ -199,55 +141,20 @@ class DamageIndicatorHolo {
 
             display?.let {
                 val startLoc = spawnLoc.clone()
-                HologramAnimation.animate(it, plugin, 40) {
+                HologramAnimation.animate(it, plugin, ANIMATION_DURATION.toInt()) {
                     onTick = { progress, _ ->
-                        val height = sin(progress * Math.PI) * 1.2
-                        it.teleport(startLoc.clone().add(0.0, height, 0.0))
+                        val yOffset = if (progress < RISE_PERCENT) {
+                            // Rise phase
+                            (progress / RISE_PERCENT) * MAX_RISE_HEIGHT
+                        } else {
+                            // Fall phase
+                            MAX_RISE_HEIGHT - ((progress - RISE_PERCENT) / (1.0 - RISE_PERCENT)) * (MAX_RISE_HEIGHT + FALL_DISTANCE)
+                        }
+                        it.teleport(startLoc.clone().add(0.0, yOffset, 0.0))
                     }
                     fadeOut = true
-                    fadeStartPercent = 0.6
-                    easing = HologramAnimation.Easing::linear
-                    scaleChange = if (breakdown.wasCrit) Vector(0.5, 0.5, 0.5) else Vector(0.3, 0.3, 0.3)
-                }
-            }
-        }
-    }
-
-    /** Drift-style damage indicators with crit customization */
-    fun showDamageIndicatorsDrift(location: Location, breakdown: DamageBreakdown) {
-        val baseLoc = location.clone()
-
-        breakdown.elementalDamages.forEach { (element, damage) ->
-            if (damage <= 0) return@forEach
-
-            val symbol = element.toSymbol()
-            val isCrit = breakdown.wasCrit
-            val text = formatDamageText(symbol, element, damage, isCrit)
-
-            val horizontalOffsetX = (Math.random() - 0.5) * 0.4
-            val horizontalOffsetZ = (Math.random() - 0.5) * 0.4
-            val spawnLoc = baseLoc.clone().add(horizontalOffsetX, 0.8, horizontalOffsetZ)
-
-            val display = TempHologramController.spawnTemp(spawnLoc, text, 40L, plugin) {
-                this.billboard = Display.Billboard.CENTER
-                this.isShadowed = true
-                this.alignment = TextDisplay.TextAlignment.CENTER
-            }
-
-            display?.let {
-                val startLoc = spawnLoc.clone()
-                HologramAnimation.animate(it, plugin, 40) {
-                    onTick = { progress, _ ->
-                        val height = sin(progress * Math.PI) * 1.0 + 0.2
-                        val x = startLoc.x + horizontalOffsetX
-                        val y = startLoc.y + height
-                        val z = startLoc.z + horizontalOffsetZ
-                        it.teleport(Location(startLoc.world, x, y, z))
-                    }
-                    scaleChange = if (isCrit) Vector(0.5, 0.5, 0.5) else Vector(0.3, 0.3, 0.3)
-                    fadeOut = true
-                    fadeStartPercent = 0.6
-                    easing = HologramAnimation.Easing::easeOutQuad
+                    fadeStartPercent = 0.7
+                    scaleChange = if (breakdown.wasCrit) Vector(CRIT_SCALE, CRIT_SCALE, CRIT_SCALE) else Vector(BASE_SCALE, BASE_SCALE, BASE_SCALE)
                 }
             }
         }

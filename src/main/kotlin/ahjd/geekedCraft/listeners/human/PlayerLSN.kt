@@ -56,16 +56,15 @@ class PlayerLSN : Listener {
         PlayerManager.savePlayer(uuid, playerOBJ)
     }
 
-    fun startPlaytimeTracking() {
+    fun startPlaytimeTracking(): Int {
         val plugin = GeekedCraft.getInstance()
 
-        // Increment playtime every 60 seconds (60 * 1000 ms)
-        plugin.scheduleRepeatingTask({
+        return plugin.scheduleRepeatingTask({
             for (player in plugin.server.onlinePlayers) {
                 val uuid = player.uniqueId.toString()
-                PlayerManager.addPlaytime(uuid, 60_000L) // add 1 minute = 60,000 ms
+                PlayerManager.addPlaytime(uuid, 60_000L)
             }
-        }, 0L, 20L * 60) // 20 ticks per second * 60 seconds = 1 minute
+        }, 0L, 20L * 60)
     }
 
     @EventHandler

@@ -9,24 +9,27 @@ import org.bukkit.Bukkit
  * Applies healthregen stat every 3 seconds (60 ticks)
  */
 object HumanRegenTicker {
+    private var taskId: Int? = null
 
-    fun start() {
+    fun start(): Int {
+        stop()
         val plugin = GeekedCraft.getInstance()
 
-        plugin.scheduleRepeatingTask({
+        taskId = plugin.scheduleRepeatingTask({
             Bukkit.getOnlinePlayers().forEach { player ->
                 val stats = HumanStatManager.get(player.uniqueId.toString())
-
-                // Skip if player is dead or no regen
                 if (player.isDead || stats.healthregen == 0) return@forEach
-
-                // Skip if already at bounds
                 if (stats.health >= stats.maxhealth && stats.healthregen > 0) return@forEach
                 if (stats.health <= 0 && stats.healthregen < 0) return@forEach
-
-                // Apply regen to base health (preserves equipment bonuses)
                 stats.modifyBaseValue("health", stats.healthregen)
             }
         }, 0L, 100L)
+
+        return taskId!!
+    }
+
+    fun stop() {
+        taskId?.let { Bukkit.getScheduler().cancelTask(it) }
+        taskId = null
     }
 }

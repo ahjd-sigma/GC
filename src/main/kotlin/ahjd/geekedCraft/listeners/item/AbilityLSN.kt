@@ -123,9 +123,8 @@ class AbilityLSN(private val plugin: GeekedCraft) : Listener {
         playerCooldowns[abilityId] = System.currentTimeMillis()
     }
 
-    // Start periodic ability ticker
-    fun startPeriodicAbilities() {
-        plugin.scheduleRepeatingTask({
+    fun startPeriodicAbilities(): Int {
+        return plugin.scheduleRepeatingTask({
             plugin.server.onlinePlayers.forEach { player ->
                 try {
                     checkPeriodicAbilities(player)
@@ -133,7 +132,7 @@ class AbilityLSN(private val plugin: GeekedCraft) : Listener {
                     MSG.warn("Error checking periodic abilities for ${player.name}: ${e.message}")
                 }
             }
-        }, 0L, 20L) // Run every second
+        }, 0L, 20L)
     }
 
     private fun checkPeriodicAbilities(player: Player) {

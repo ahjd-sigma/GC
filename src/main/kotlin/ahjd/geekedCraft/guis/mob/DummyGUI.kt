@@ -1,8 +1,8 @@
 package ahjd.geekedCraft.guis.mob
 
 import ahjd.geekedCraft.mob.stats.MobStats
-import ahjd.geekedCraft.mob.misc.dummy.DummyCombatTracker
-import ahjd.geekedCraft.mob.misc.dummy.DummyDPSTest
+import ahjd.geekedCraft.mob.util.dummy.DummyCombatTracker
+import ahjd.geekedCraft.mob.util.dummy.DummyDPSTest
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.enchantments.Enchantment

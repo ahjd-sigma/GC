@@ -1,4 +1,4 @@
-package ahjd.geekedCraft.mob.misc
+package ahjd.geekedCraft.mob.util
 
 import ahjd.geekedCraft.mob.stats.MobStats
 import net.kyori.adventure.text.Component

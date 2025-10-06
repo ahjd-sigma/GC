@@ -9,8 +9,6 @@ import ahjd.geekedCraft.database.managers.HologramManager
 import ahjd.geekedCraft.database.managers.PlayerManager
 import ahjd.geekedCraft.hologram.HologramController
 import ahjd.geekedCraft.hologram.TempHologramController
-import ahjd.geekedCraft.human.util.HumanHealthDisplay
-import ahjd.geekedCraft.human.util.HumanRegenTicker
 import ahjd.geekedCraft.item.ItemManager
 import ahjd.geekedCraft.item.ability.AbilityRegistry
 import ahjd.geekedCraft.listeners.damage.DamageCatcherLSN
@@ -22,19 +20,18 @@ import ahjd.geekedCraft.listeners.mob.MobOBJChangeLSN
 import ahjd.geekedCraft.listeners.mob.MobSpeedLSN
 import ahjd.geekedCraft.mob.MobManager
 import ahjd.geekedCraft.mob.ai.MobAI
-import ahjd.geekedCraft.mob.misc.MobDisplayUpdateTask
-import ahjd.geekedCraft.mob.misc.MobHealthRegenTask
-import ahjd.geekedCraft.mob.misc.dummy.DummyCombatTracker
-import ahjd.geekedCraft.mob.misc.dummy.DummyDPSTest
 import ahjd.geekedCraft.util.MSG
 import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 
+//TODO: last thing frfr -> effects on mobs and players, set kinds of effects like abilities, ways to inflict them like consumables (effect like ability so the normal stats displayed also apply as an equipment)
+//TODO: also show in compass breakdown
 //TODO: classes -> spells -> subclasses {itemized} trove tye shi
 
 class GeekedCraft : JavaPlugin() {
     private lateinit var playerManager: PlayerManager
     private lateinit var abilityLSN: AbilityLSN
+    private lateinit var playerLSN: PlayerLSN
 
     companion object {
         private lateinit var instance: GeekedCraft
@@ -43,47 +40,34 @@ class GeekedCraft : JavaPlugin() {
     }
 
     override fun onEnable() {
-        // Plugin startup logic
         instance = this
-
         DatabaseManager.start()
-
         playerManager = PlayerManager
 
-        // Register all abilities FIRST
+        // Register all abilities
         AbilityRegistry.registerDefaults()
-        MSG.info("Registered ${AbilityRegistry.getAll().size} abilities")
 
-        // Register listeners (this initializes abilityListener)
+        // Register listeners (this initializes abilityLSN and playerLSN)
         regListeners()
         regCommands()
 
         MobManager.clear()
 
-        // Load all holograms from database
+        // Load and spawn holograms
         HologramManager.loadAll()
-
-        // Clean up orphaned TextDisplay entities
         HologramController.cleanupOrphanedEntities()
-
-        // Spawn all holograms that have valid locations
         HologramController.spawnAll()
 
+        // Initialize mob AI
         MobAI.initialize(instance)
 
-        HumanRegenTicker.start()
-        HumanHealthDisplay.startTicker()
-        PlayerLSN().startPlaytimeTracking()
-        MobHealthRegenTask.start(this)
-        MobDisplayUpdateTask.start(this)
-        DummyCombatTracker.start()
-        DummyDPSTest.start()
-        abilityLSN.startPeriodicAbilities()
+        // Start all tasks - ONE LINE!
+        TaskManager.startAll(this, abilityLSN, playerLSN)
 
-        // Config.yml for plugin-wide settings
+        // Config setup
         saveDefaultConfig()
 
-        // Items.yml for custom items
+        // Items.yml setup
         if (!dataFolder.exists()) dataFolder.mkdirs()
         val itemsFile = File(dataFolder, "items.yml")
         if (!itemsFile.exists()) {
@@ -95,34 +79,28 @@ class GeekedCraft : JavaPlugin() {
         MSG.info("GeekedCraft RPG Plugin has been enabled!")
     }
 
+
     override fun onDisable() {
-       // Plugin shutdown logic
         PlayerManager.saveAll()
-
-        // Clear tracked mobs from memory
         MobManager.clear()
-
-        // Despawn all holograms
         HologramController.despawnAll()
 
-        // Clean-up any temp hologram
+        // Stop all tasks - ONE LINE!
+        TaskManager.stopAll()
+
         TempHologramController.cleanupAll()
-
-        // Save all holograms to database
         HologramManager.saveAll()
-
         DatabaseManager.shutdown()
 
         MSG.info("GeekedCraft RPG Plugin has been disabled!")
     }
 
-
     private fun regListeners() {
         val dummyGUIListener = DummyGUILSN()
         abilityLSN = AbilityLSN(this)
-
+        playerLSN = PlayerLSN()
         listOf(
-            PlayerLSN(),
+            playerLSN,
             HumanDeathLSN(),
             DamageCatcherLSN(),
             MobDeathLSN(),
@@ -137,21 +115,18 @@ class GeekedCraft : JavaPlugin() {
         ).forEach { server.pluginManager.registerEvents(it, this) }
     }
 
-   private fun regCommands() {
-       // Create base command instances
-       val databaseCmd = DBCMD()
-       val humanCmd = HumanCMD()
-       val mobCmd = MobCMD()
-       val itemCmd = ItemCMD()
+    private fun regCommands() {
+        val databaseCmd = DBCMD()
+        val humanCmd = HumanCMD()
+        val mobCmd = MobCMD()
+        val itemCmd = ItemCMD()
 
-       // Register base commands
-       getCommand("db")?.setExecutor(databaseCmd)
-       getCommand("hm")?.setExecutor(humanCmd)
-       getCommand("mob")?.setExecutor(mobCmd)
-       getCommand("it")?.setExecutor(itemCmd)
+        getCommand("db")?.setExecutor(databaseCmd)
+        getCommand("hm")?.setExecutor(humanCmd)
+        getCommand("mob")?.setExecutor(mobCmd)
+        getCommand("it")?.setExecutor(itemCmd)
     }
-
-    //Helper method for outer classes
+    // Helper method for outer classes
     fun scheduleRepeatingTask(runnable: Runnable, delay: Long, period: Long): Int {
         return server.scheduler.runTaskTimer(this, runnable, delay, period).taskId
     }

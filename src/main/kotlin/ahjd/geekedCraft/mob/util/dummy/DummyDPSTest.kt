@@ -1,4 +1,4 @@
-package ahjd.geekedCraft.mob.misc.dummy
+package ahjd.geekedCraft.mob.util.dummy
 
 import ahjd.geekedCraft.damage.DealDamage
 import ahjd.geekedCraft.damage.util.DamageType

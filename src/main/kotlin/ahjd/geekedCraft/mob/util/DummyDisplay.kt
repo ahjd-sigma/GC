@@ -1,7 +1,7 @@
-package ahjd.geekedCraft.mob.misc
+package ahjd.geekedCraft.mob.util
 
-import ahjd.geekedCraft.mob.misc.dummy.DummyCombatTracker
 import ahjd.geekedCraft.mob.stats.MobStats
+import ahjd.geekedCraft.mob.util.dummy.DummyCombatTracker
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.LivingEntity

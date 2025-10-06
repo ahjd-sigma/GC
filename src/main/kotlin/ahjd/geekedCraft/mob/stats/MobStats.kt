@@ -2,7 +2,7 @@ package ahjd.geekedCraft.mob.stats
 
 import ahjd.geekedCraft.events.mob.MobDeathEvent
 import ahjd.geekedCraft.events.mob.MobSpeedChangeEvent
-import ahjd.geekedCraft.mob.misc.MobHealthDisplay
+import ahjd.geekedCraft.mob.util.MobHealthDisplay
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.entity.LivingEntity
