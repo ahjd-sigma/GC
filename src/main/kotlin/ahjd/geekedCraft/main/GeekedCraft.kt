@@ -25,7 +25,7 @@ import org.bukkit.plugin.java.JavaPlugin
 import java.io.File
 
 //TODO: last thing frfr -> effects on mobs and players, set kinds of effects like abilities, ways to inflict them like consumables (effect like ability so the normal stats displayed also apply as an equipment)
-//TODO: also show in compass breakdown
+//TODO: also show in compass breakdown // DOUBLE CHECK DAMAGE CALC's ELEMENTS IT SHOULD BE FINE THO
 //TODO: classes -> spells -> subclasses {itemized} trove tye shi
 
 class GeekedCraft : JavaPlugin() {
@@ -126,8 +126,29 @@ class GeekedCraft : JavaPlugin() {
         getCommand("mob")?.setExecutor(mobCmd)
         getCommand("it")?.setExecutor(itemCmd)
     }
-    // Helper method for outer classes
+
+    // ==================== TASK HELPERS ====================
+
+    /**
+     * Schedule a repeating task
+     * @return task ID
+     */
     fun scheduleRepeatingTask(runnable: Runnable, delay: Long, period: Long): Int {
         return server.scheduler.runTaskTimer(this, runnable, delay, period).taskId
+    }
+
+    /**
+     * Schedule a one-time delayed task
+     * @return task ID
+     */
+    fun scheduleDelayedTask(runnable: Runnable, delay: Long): Int {
+        return server.scheduler.runTaskLater(this, runnable, delay).taskId
+    }
+
+    /**
+     * Cancel a task by ID
+     */
+    fun cancelTask(taskId: Int) {
+        server.scheduler.cancelTask(taskId)
     }
 }

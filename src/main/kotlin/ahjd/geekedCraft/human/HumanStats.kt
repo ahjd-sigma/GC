@@ -1,8 +1,11 @@
 package ahjd.geekedCraft.human
 
+import ahjd.geekedCraft.effect.Effect
 import ahjd.geekedCraft.events.human.HumanDeathEvent
+import ahjd.geekedCraft.human.util.HumanEffectTask
 import ahjd.geekedCraft.listeners.human.HumanSpeedLSN
 import ahjd.geekedCraft.listeners.item.ItemEquipLSN
+import ahjd.geekedCraft.main.GeekedCraft
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import java.util.*
@@ -87,11 +90,14 @@ data class HumanStats(
 
     // ==================== INTERNAL STATE ====================
 
-    // NEW: Store true base values separately from equipment
+    // Store true base values separately from equipment
     private val baseValues = mutableMapOf<String, Int>()
 
     // Store ONLY current equipment bonuses: Slot -> (StatName -> Value)
     private val equipmentBonuses = mutableMapOf<EquipmentSlot, Map<String, Int>>()
+
+    // Effects - MADE INTERNAL (not private) so HumanEffectTask can access
+    internal val activeEffects = mutableListOf<Effect>()
 
     // Lock for thread safety
     private val lock = Any()
@@ -273,11 +279,7 @@ data class HumanStats(
             baseValues[property.name] = baseValue
 
             // Recalculate total: base + equipment
-            val equipBonus = getTotalEquipmentBonus(property.name)
-            val newTotal = (baseValue + equipBonus).coerceIn(range)
-            property.set(this, newTotal)
-
-            triggerStatChangeEffects()
+            recalculateAllStats()
             return true
         }
     }
@@ -311,7 +313,7 @@ data class HumanStats(
             // Calculate total equipment bonus
             val equipmentTotal = equipmentBonuses.values.sumOf { it[property.name] ?: 0 }
 
-            // Set new total: base + equipment
+            // Set new total: base + equipment (effects are NOT stat modifiers)
             val newTotal = (baseValue + equipmentTotal).coerceIn(range)
             property.set(this, newTotal)
         }
@@ -340,5 +342,43 @@ data class HumanStats(
         if (player is Player) {
             ItemEquipLSN.updateCrossbow(player)
         }
+    }
+
+    // =================== EFFECTS ====================
+
+    fun applyEffect(effect: Effect) {
+        synchronized(lock) {
+            activeEffects.add(effect)
+            effect.onApply(this)
+
+            // schedule ticks if periodic
+            if (effect.periodic) {
+                HumanEffectTask.start(GeekedCraft.getInstance(), this, effect)
+            }
+
+            // auto-remove after duration if timed
+            effect.durationTicks?.let { ticks ->
+                GeekedCraft.getInstance().scheduleDelayedTask({
+                    removeEffect(effect)
+                }, ticks)
+            }
+        }
+    }
+
+    fun removeEffect(effect: Effect) {
+        synchronized(lock) {
+            if (activeEffects.remove(effect)) {
+                effect.onRemove(this)
+                HumanEffectTask.stop(this)
+            }
+        }
+    }
+
+    fun hasEffect(effectId: String): Boolean {
+        return activeEffects.any { it.id == effectId }
+    }
+
+    fun getActiveEffects(): List<Effect> {
+        return activeEffects.toList()
     }
 }

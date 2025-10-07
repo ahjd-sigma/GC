@@ -12,6 +12,7 @@ class HumanCMD : CommandExecutor, TabCompleter {
 
     init {
         registerSubCommand(HumanStatSBCMD())
+        registerSubCommand(HumanEffectSBCMD())
     }
 
     private fun registerSubCommand(sub: SubCommand) {
